@@ -29,7 +29,7 @@ main :: proc() {
 		}
 	}
 
-	day1()
+	day2()
 }
 
 day1 :: proc() {
@@ -76,4 +76,73 @@ day1 :: proc() {
 	}
 
 	fmt.println(total_distance, sim_score)
+}
+
+day2 :: proc() {
+	data: []u8 = #load("../inputs/day2.txt")
+
+	assert(len(data) > 0)
+
+	safe_count := 0
+	numbers: [dynamic]int
+	curr_num: [dynamic]u8
+
+	for char in data {
+		if char == ' ' {
+			append(&numbers, strconv.atoi(string(curr_num[:])))
+			clear(&curr_num)
+		} else if char == '\n' {
+			is_good_report :: proc(numbers: []int) -> bool {
+				is_line_valid := false
+
+				asc_cb :: proc(i, j: int) -> bool {
+					if i < j do return true
+					else do return false
+				}
+
+				desc_cb :: proc(i, j: int) -> bool {
+					if i > j do return true
+					else do return false
+				}
+
+				asc := slice.is_sorted_by(numbers, asc_cb)
+				desc := slice.is_sorted_by(numbers, desc_cb)
+
+				for i := 0; i < len(numbers) - 1; i += 1 {
+					max_n := max(numbers[i + 1], numbers[i])
+					min_n := min(numbers[i + 1], numbers[i])
+					gap := max_n - min_n
+
+					if gap > 0 && gap < 4 do is_line_valid = true
+					else {
+						is_line_valid = false
+						break
+					}
+				}
+
+				return (asc ~ desc) && is_line_valid
+			}
+
+			append(&numbers, strconv.atoi(string(curr_num[:])))
+
+			if is_good_report(numbers[:]) do safe_count += 1
+			else {
+				for _, idx in numbers {
+					old_val := numbers[idx]
+					ordered_remove(&numbers, idx)
+
+					if is_good_report(numbers[:]) {
+						safe_count += 1
+						break
+					} else do inject_at(&numbers, idx, old_val)
+				}
+			}
+
+			clear(&curr_num)
+			clear(&numbers)
+		} else {
+			append(&curr_num, char)
+		}
+	}
+	fmt.println(safe_count)
 }
