@@ -1,0 +1,17 @@
+{
+        "configurations": [
+                {
+                        "name": "aoc",
+                        "type": "cppdbg",
+                        "request": "launch",
+                        "program": "${workspaceFolder}/build/aoc",
+                        "args": [],
+                        "stopAtEntry": false,
+                        "cwd": "${workspaceFolder}",
+                        "environment": [],
+                        "externalConsole": false,
+                        "MIMode": "lldb",
+                        "preLaunchTask": "build"
+                }
+        ]
+}

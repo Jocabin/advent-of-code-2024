@@ -4,6 +4,8 @@ import "core:fmt"
 import "core:mem"
 import "core:slice"
 import "core:strconv"
+import "core:strings"
+import "core:unicode"
 
 main :: proc() {
 	// track for memory leaks
@@ -29,7 +31,7 @@ main :: proc() {
 		}
 	}
 
-	day2()
+	day4()
 }
 
 day1 :: proc() {
@@ -145,4 +147,195 @@ day2 :: proc() {
 		}
 	}
 	fmt.println(safe_count)
+}
+
+day3 :: proc() {
+	data: []u8 = #load("../inputs/day3.txt")
+	assert(len(data) > 0)
+
+	pattern_is_matching := false
+	comma_encountered := false
+	mul_enable := true
+	total_score: u64 = 0
+	total_instr := 0
+
+	n1 := 0
+	n2 := 0
+	n1_str: [dynamic]u8
+	n2_str: [dynamic]u8
+
+	for index := 0; index < len(data) - 10; {
+		char := data[index]
+
+		if !pattern_is_matching {
+			if string(data[index:index + 4]) == "mul(" && mul_enable {
+				pattern_is_matching = true
+				index += 4
+				continue
+			} else if string(data[index:index + 4]) == "do()" {
+				mul_enable = true
+			} else if string(data[index:index + 7]) == "don't()" {
+				mul_enable = false
+			}
+		} else if unicode.is_number(rune(char)) && pattern_is_matching {
+			if comma_encountered {
+				append(&n2_str, data[index])
+			} else {
+				append(&n1_str, data[index])
+			}
+		} else if char == ',' && pattern_is_matching {
+			comma_encountered = true
+		} else if char == ')' && pattern_is_matching {
+			n1 = strconv.atoi(string(n1_str[:]))
+			n2 = strconv.atoi(string(n2_str[:]))
+
+			total_score += u64(n1 * n2)
+			total_instr += 1
+
+			comma_encountered = false
+			pattern_is_matching = false
+			n1 = 0
+			n2 = 0
+
+			clear(&n1_str)
+			clear(&n2_str)
+		} else {
+			pattern_is_matching = false
+			comma_encountered = false
+			n1 = 0
+			n2 = 0
+
+			clear(&n1_str)
+			clear(&n2_str)
+		}
+		index += 1
+	}
+	fmt.println(total_score, total_instr)
+}
+
+day4 :: proc() {
+	data: []u8 = #load("../inputs/day4.txt")
+	assert(len(data) > 0)
+
+	COLS :: 140
+	ROWS :: 140
+	ws: [COLS][ROWS]rune
+	score := 0
+	line_i := 0
+
+	it := string(data)
+	for line in strings.split_lines_iterator(&it) {
+		for char, char_i in line {
+			ws[line_i][char_i] = char
+		}
+		line_i += 1
+	}
+
+	for x := 0; x < COLS - 3; x += 1 {
+		for y := 0; y < ROWS - 3; y += 1 {
+			// horizontal
+			if x + 3 < COLS {
+				if ws[x][y] == 'X' &&
+				   ws[x + 1][y] == 'M' &&
+				   ws[x + 2][y] == 'A' &&
+				   ws[x + 3][y] == 'S' {
+					score += 1
+				}
+			}
+			if x - 3 > 0 {
+				if ws[x][y] == 'X' &&
+				   ws[x - 1][y] == 'M' &&
+				   ws[x - 2][y] == 'A' &&
+				   ws[x - 3][y] == 'S' {
+					score += 1
+				}
+			}
+
+			// vertical
+			if y + 3 < ROWS {
+				if ws[x][y] == 'X' &&
+				   ws[x][y + 1] == 'M' &&
+				   ws[x][y + 2] == 'A' &&
+				   ws[x][y + 3] == 'S' {
+					score += 1
+				}
+			}
+			if y - 3 > 0 {
+				if ws[x][y] == 'X' &&
+				   ws[x][y + 1] == 'M' &&
+				   ws[x][y + 2] == 'A' &&
+				   ws[x][y + 3] == 'S' {
+					score += 1
+				}
+			}
+
+			// diagonal
+			// sud est
+			if x + 3 < COLS && y + 3 < ROWS {
+				if ws[x][y] == 'X' &&
+				   ws[x + 1][y + 1] == 'M' &&
+				   ws[x + 2][y + 2] == 'A' &&
+				   ws[x + 3][y + 3] == 'S' {
+					score += 1
+				}
+				// if ws[x][y] == 'S' &&
+				//    ws[x + 1][y + 1] == 'A' &&
+				//    ws[x + 2][y + 2] == 'M' &&
+				//    ws[x + 3][y + 3] == 'X' {
+				// 	score += 1
+				// }
+			}
+
+			// nord est
+			if y - 3 >= 0 && x + 3 < COLS {
+				if ws[x][y] == 'X' &&
+				   ws[x + 1][y - 1] == 'M' &&
+				   ws[x + 2][y - 2] == 'A' &&
+				   ws[x + 3][y - 3] == 'S' {
+					score += 1
+				}
+				// if ws[x][y] == 'S' &&
+				//    ws[x + 1][y - 1] == 'A' &&
+				//    ws[x + 2][y - 2] == 'M' &&
+				//    ws[x + 3][y - 3] == 'X' {
+				// 	score += 1
+				// }
+			}
+
+			// nord ouest
+			if y - 3 >= 0 && x - 3 > 0 {
+				if ws[x][y] == 'X' &&
+				   ws[x - 1][y - 1] == 'M' &&
+				   ws[x - 2][y - 2] == 'A' &&
+				   ws[x - 3][y - 3] == 'S' {
+					score += 1
+				}
+				// if ws[x][y] == 'S' &&
+				//    ws[x - 1][y - 1] == 'A' &&
+				//    ws[x - 2][y - 2] == 'M' &&
+				//    ws[x - 3][y - 3] == 'X' {
+				// 	score += 1
+				// }
+			}
+
+			// sud ouest
+			if y - 3 >= 0 && x - 3 > 0 {
+				if ws[x][y] == 'X' &&
+				   ws[x - 1][y + 1] == 'M' &&
+				   ws[x - 2][y + 2] == 'A' &&
+				   ws[x - 3][y + 3] == 'S' {
+					score += 1
+				}
+				// if ws[x][y] == 'S' &&
+				//    ws[x - 1][y + 1] == 'A' &&
+				//    ws[x - 2][y + 2] == 'M' &&
+				//    ws[x - 3][y + 3] == 'X' {
+				// 	score += 1
+				// }
+			}
+		}
+	}
+
+	fmt.println(score)
+	assert(score > 1524 && score < 2831)
 }
